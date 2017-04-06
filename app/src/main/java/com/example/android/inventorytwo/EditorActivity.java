@@ -18,26 +18,29 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.example.android.inventorytwo.data.InventoryContract;
+import com.example.android.inventorytwo.data.InventoryContract.InventoryEntry;
 
+import java.io.File;
 
 public class EditorActivity extends AppCompatActivity implements
         LoaderManager.LoaderCallbacks<Cursor> {
 
     static final int REQUEST_IMAGE_CAPTURE = 1;
     private static final int EXISTING_INVENTORY_LOADER = 0;
+    private static final int PICK_Camera_IMAGE = 2;
+    Uri imageUri;
     private Uri mCurrentItemUri;
     private EditText mNameEditText;
     private EditText mQuantityEditText;
     private EditText mPriceEditText;
     private ImageView mItemPicture;
     private boolean mItemHasChanged = false;
-
-
+    private String mPicturePath;
     private View.OnTouchListener mTouchListener = new View.OnTouchListener() {
         @Override
         public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -70,11 +73,12 @@ public class EditorActivity extends AppCompatActivity implements
         mNameEditText = (EditText) findViewById(R.id.edit_pet_name);
         mQuantityEditText = (EditText) findViewById(R.id.edit_quantity);
         mPriceEditText = (EditText) findViewById(R.id.edit_price);
+        mItemPicture = (ImageView) findViewById(R.id.image_view);
 
         mNameEditText.setOnTouchListener(mTouchListener);
         mQuantityEditText.setOnTouchListener(mTouchListener);
         mPriceEditText.setOnTouchListener(mTouchListener);
-        mItemPicture.setOnTouchListener(mTouchListener);
+        //mItemPicture.setOnTouchListener(mTouchListener);
     }
 
     private void saveItem() {
@@ -82,24 +86,20 @@ public class EditorActivity extends AppCompatActivity implements
         String nameString = mNameEditText.getText().toString().trim();
         String quantityString = mQuantityEditText.getText().toString().trim();
         String priceString = mPriceEditText.getText().toString().trim();
-        String imageString = mCurrentItemUri.toString();
 
         if (mCurrentItemUri == null &&
                 TextUtils.isEmpty(nameString) && TextUtils.isEmpty(priceString) &&
-                TextUtils.isEmpty(quantityString) && TextUtils.isEmpty(imageString)) {
+                TextUtils.isEmpty(quantityString)) ;
 
-
-            return;
-        }
+        {
 
             ContentValues values = new ContentValues();
-            values.put(InventoryContract.InventoryEntry.COLUMN_ITEM_NAME, nameString);
-            values.put(InventoryContract.InventoryEntry.COLUMN_ITEM_QUANTITY, quantityString);
-            values.put(InventoryContract.InventoryEntry.COLUMN_ITEM_PRICE, priceString);
-            values.put(InventoryContract.InventoryEntry.COLUMN_ITEM_PICTURE, imageString);
+            values.put(InventoryEntry.COLUMN_ITEM_NAME, nameString);
+            values.put(InventoryEntry.COLUMN_ITEM_QUANTITY, quantityString);
+            values.put(InventoryEntry.COLUMN_ITEM_PRICE, priceString);
+            //values.put(InventoryEntry.COLUMN_ITEM_PICTURE, mPicturePath);
 
-
-            String name = values.getAsString(InventoryContract.InventoryEntry.COLUMN_ITEM_NAME);
+            String name = values.getAsString(InventoryEntry.COLUMN_ITEM_NAME);
             if (name == null) {
                 //if (!TextUtils.isEmpty(nameString)) {
                 Toast.makeText(this, "Need name", Toast.LENGTH_LONG).show();
@@ -113,7 +113,6 @@ public class EditorActivity extends AppCompatActivity implements
                 Toast.makeText(this, "Need Quantity entry not created", Toast.LENGTH_LONG).show();
                 return;
             }
-            values.put(InventoryContract.InventoryEntry.COLUMN_ITEM_QUANTITY, quantityString);
 
             int price = 0;
             if (!TextUtils.isEmpty(priceString)) {
@@ -122,15 +121,10 @@ public class EditorActivity extends AppCompatActivity implements
                 Toast.makeText(this, "Need Price entry not created", Toast.LENGTH_LONG).show();
                 return;
             }
-            if (imageString == null) {
-                mItemPicture.setImageResource(R.drawable.inventory);
-                imageString = mItemPicture.toString();
-            }
-            values.put(InventoryContract.InventoryEntry.COLUMN_ITEM_PICTURE, imageString);
 
             if (mCurrentItemUri == null) {
 
-                Uri newUri = getContentResolver().insert(InventoryContract.InventoryEntry.CONTENT_URI, values);
+                Uri newUri = getContentResolver().insert(InventoryEntry.CONTENT_URI, values);
 
                 // Show a toast message depending on whether or not the insertion was successful.
                 if (newUri == null) {
@@ -157,10 +151,9 @@ public class EditorActivity extends AppCompatActivity implements
                             Toast.LENGTH_SHORT).show();
                 }
             }
-            finish();
         }
 
-
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -220,13 +213,34 @@ public class EditorActivity extends AppCompatActivity implements
                 startActivity(Intent.createChooser(emailIntent, "Send email..."));
                 return true;
             case R.id.action_picture:
-                    Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                //Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                //if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+                //  startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+                // return true;
+
+                Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                     takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT,
                             MediaStore.Images.Media.EXTERNAL_CONTENT_URI.getPath());
-                    startActivityForResult(takePictureIntent, 1);
+                startActivityForResult(takePictureIntent, 1);
+                //return true;
+
+                //define the file-name to save photo taken by Camera activity
+                String fileName = "new-photo-name.jpg";
+                //create parameters for Intent with filename
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.Images.Media.TITLE, fileName);
+                values.put(MediaStore.Images.Media.DESCRIPTION, "Image capture by camera");
+                //imageUri is the current activity attribute, define and save it for later usage (also in onSaveInstanceState)
+                imageUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                //create new Intent
+                Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+                //intent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 1);
+                startActivityForResult(intent, PICK_Camera_IMAGE);
                 return true;
 
-                // Respond to a click on the "Up" arrow button in the app bar
+
+            // Respond to a click on the "Up" arrow button in the app bar
             case android.R.id.home:
 
                 if (!mItemHasChanged) {
@@ -306,12 +320,14 @@ public class EditorActivity extends AppCompatActivity implements
 
     @Override
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
+        // Since the editor shows all pet attributes, define a projection that contains
+        // all columns from the pet table
         String[] projection = {
-                InventoryContract.InventoryEntry._ID,
-                InventoryContract.InventoryEntry.COLUMN_ITEM_NAME,
-                InventoryContract.InventoryEntry.COLUMN_ITEM_QUANTITY,
-                InventoryContract.InventoryEntry.COLUMN_ITEM_PRICE,
-                InventoryContract.InventoryEntry.COLUMN_ITEM_PICTURE,
+                InventoryEntry._ID,
+                InventoryEntry.COLUMN_ITEM_NAME,
+                InventoryEntry.COLUMN_ITEM_QUANTITY,
+                InventoryEntry.COLUMN_ITEM_PRICE,
+                //InventoryEntry.COLUMN_ITEM_PICTURE,
         };
 
         // This loader will execute the ContentProvider's query method on a background thread
@@ -326,7 +342,7 @@ public class EditorActivity extends AppCompatActivity implements
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
         // Bail early if the cursor is null or there is less than 1 row in the cursor
-        if (cursor == null || cursor.getCount() < 1) {
+        if (cursor == null || cursor.getCount() < 0) {
             return;
         }
 
@@ -334,18 +350,18 @@ public class EditorActivity extends AppCompatActivity implements
         // (This should be the only row in the cursor)
         if (cursor.moveToFirst()) {
             // Find the columns of item attributes that we're interested in
-            int nameColumnIndex = cursor.getColumnIndex(InventoryContract.InventoryEntry.COLUMN_ITEM_NAME);
-            int quantityColumnIndex = cursor.getColumnIndex(InventoryContract.InventoryEntry.COLUMN_ITEM_QUANTITY);
-            int priceColumnIndex = cursor.getColumnIndex(InventoryContract.InventoryEntry.COLUMN_ITEM_PRICE);
-            int pictureColumnIndex = cursor.getColumnIndex(InventoryContract.InventoryEntry.COLUMN_ITEM_PICTURE);
+            int nameColumnIndex = cursor.getColumnIndex(InventoryEntry.COLUMN_ITEM_NAME);
+            int quantityColumnIndex = cursor.getColumnIndex(InventoryEntry.COLUMN_ITEM_QUANTITY);
+            int priceColumnIndex = cursor.getColumnIndex(InventoryEntry.COLUMN_ITEM_PRICE);
+            int pictureColumnIndex = cursor.getColumnIndex(InventoryEntry.COLUMN_ITEM_PICTURE);
 
             // Extract out the value from the Cursor for the given column index
             String name = cursor.getString(nameColumnIndex);
             int quantity = cursor.getInt(quantityColumnIndex);
             int price = cursor.getInt(priceColumnIndex);
-            String image = cursor.getString(pictureColumnIndex);
+            String picture = cursor.getString(pictureColumnIndex);
 
-            Uri imageUri = Uri.parse(image);
+            Uri imageUri = Uri.parse(picture);
 
             // Update the views on the screen with the values from the database
             mNameEditText.setText(name);
@@ -353,6 +369,10 @@ public class EditorActivity extends AppCompatActivity implements
             mPriceEditText.setText(Integer.toString(price));
             mItemPicture.setImageURI(imageUri);
 
+            //mPicturePath = cursor.getString(pictureColumnIndex);
+            // if (!TextUtils.isEmpty(mPicturePath)) {
+            //   mItemPicture.setImageURI(Uri.parse(new File(mPicturePath).toString()));
+            // }
 
         }
     }
@@ -363,6 +383,7 @@ public class EditorActivity extends AppCompatActivity implements
         mNameEditText.setText("");
         mQuantityEditText.setSelection(0);
         mPriceEditText.setSelection(0);
+        mItemPicture.setImageResource(R.drawable.inventory);
     }
 
     private void showUnsavedChangesDialog(

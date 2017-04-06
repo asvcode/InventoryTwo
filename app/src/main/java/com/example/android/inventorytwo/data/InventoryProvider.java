@@ -8,7 +8,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.util.Log;
-import android.widget.ImageView;
 
 import com.example.android.inventorytwo.data.InventoryContract.InventoryEntry;
 
@@ -70,7 +69,7 @@ public class InventoryProvider extends ContentProvider {
             case INVENTORY:
 
                 cursor = database.query(InventoryEntry.TABLE_NAME, projection, selection, selectionArgs,
-                        null, null, null, sortOrder);
+                        null, null, sortOrder);
                 break;
             case ITEM_ID:
 
@@ -78,7 +77,7 @@ public class InventoryProvider extends ContentProvider {
                 selectionArgs = new String[]{String.valueOf(ContentUris.parseId(uri))};
 
                 cursor = database.query(InventoryEntry.TABLE_NAME, projection, selection, selectionArgs,
-                        null, null, null, sortOrder);
+                        null, null, sortOrder);
                 break;
             default:
                 throw new IllegalArgumentException("Cannot query unknown URI " + uri);
@@ -115,11 +114,6 @@ public class InventoryProvider extends ContentProvider {
         Integer price = values.getAsInteger(InventoryEntry.COLUMN_ITEM_PRICE);
         if (price != null && price < 0) {
             throw new IllegalArgumentException("Price cannot be 0");
-        }
-
-        String image = values.getAsString(InventoryEntry.COLUMN_ITEM_PICTURE);
-        if (image != null) {
-            throw new IllegalArgumentException("Requiers Picture");
         }
 
         SQLiteDatabase database = mDbHelper.getWritableDatabase();
@@ -175,7 +169,6 @@ public class InventoryProvider extends ContentProvider {
                 throw new IllegalArgumentException("Price cannot be 0");
             }
         }
-
         if (values.size() == 0) {
             return 0;
         }

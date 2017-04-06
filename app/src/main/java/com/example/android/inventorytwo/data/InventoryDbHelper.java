@@ -19,7 +19,7 @@ public class InventoryDbHelper extends SQLiteOpenHelper {
     /**
      * Database version. If you change the database schema, you must increment the database version.
      */
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 1;
 
 
     public InventoryDbHelper(Context context) {
@@ -31,12 +31,12 @@ public class InventoryDbHelper extends SQLiteOpenHelper {
      */
     @Override
     public void onCreate(SQLiteDatabase db) {
-        // Create a String that contains the SQL statement to create the inventory table
+        // Create a String that contains the SQL statement to create the pets table
         String SQL_CREATE_INVENTORY_TABLE = "CREATE TABLE " + InventoryEntry.TABLE_NAME + " ("
                 + InventoryEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + InventoryEntry.COLUMN_ITEM_NAME + " TEXT NOT NULL, "
                 + InventoryEntry.COLUMN_ITEM_QUANTITY + " INTEGER, "
-                + InventoryEntry.COLUMN_ITEM_PICTURE + " TEXT NOT NULL,"
+                //+ InventoryEntry.COLUMN_ITEM_PICTURE + " TEXT NOT NULL, "
                 + InventoryEntry.COLUMN_ITEM_PRICE + " INTEGER NOT NULL); ";
 
 

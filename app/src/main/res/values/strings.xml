@@ -48,8 +48,4 @@
     <string name="action_picture">Take Picture</string>
     <string name="select_picture">Take Picture</string>
 
-    <string name="new_stock">New Stock</string>
-    <string name="edit_stock">Edit Stock</string>
-    <string name="could_not_load_image">Could Not Load</string>
-
 </resources>
