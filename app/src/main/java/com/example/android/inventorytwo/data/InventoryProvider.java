@@ -117,8 +117,8 @@ public class InventoryProvider extends ContentProvider {
             throw new IllegalArgumentException("Price cannot be 0");
         }
 
-        String picture = values.getAsString(InventoryEntry.COLUMN_ITEM_PICTURE);
-        if (picture != null) {
+        String image = values.getAsString(InventoryEntry.COLUMN_ITEM_PICTURE);
+        if (image != null) {
             throw new IllegalArgumentException("Requiers Picture");
         }
 

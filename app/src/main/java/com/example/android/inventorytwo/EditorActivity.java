@@ -24,7 +24,6 @@ import android.widget.Toast;
 
 import com.example.android.inventorytwo.data.InventoryContract;
 
-import java.io.File;
 
 public class EditorActivity extends AppCompatActivity implements
         LoaderManager.LoaderCallbacks<Cursor> {
@@ -37,7 +36,6 @@ public class EditorActivity extends AppCompatActivity implements
     private EditText mPriceEditText;
     private ImageView mItemPicture;
     private boolean mItemHasChanged = false;
-    private String mPicturePath;
 
 
     private View.OnTouchListener mTouchListener = new View.OnTouchListener() {
@@ -72,7 +70,6 @@ public class EditorActivity extends AppCompatActivity implements
         mNameEditText = (EditText) findViewById(R.id.edit_pet_name);
         mQuantityEditText = (EditText) findViewById(R.id.edit_quantity);
         mPriceEditText = (EditText) findViewById(R.id.edit_price);
-        mItemPicture = (ImageView) findViewById(R.id.image_view);
 
         mNameEditText.setOnTouchListener(mTouchListener);
         mQuantityEditText.setOnTouchListener(mTouchListener);
@@ -85,18 +82,22 @@ public class EditorActivity extends AppCompatActivity implements
         String nameString = mNameEditText.getText().toString().trim();
         String quantityString = mQuantityEditText.getText().toString().trim();
         String priceString = mPriceEditText.getText().toString().trim();
+        String imageString = mCurrentItemUri.toString();
 
         if (mCurrentItemUri == null &&
                 TextUtils.isEmpty(nameString) && TextUtils.isEmpty(priceString) &&
-                TextUtils.isEmpty(quantityString)) ;
+                TextUtils.isEmpty(quantityString) && TextUtils.isEmpty(imageString)) {
 
-        {
+
+            return;
+        }
 
             ContentValues values = new ContentValues();
             values.put(InventoryContract.InventoryEntry.COLUMN_ITEM_NAME, nameString);
             values.put(InventoryContract.InventoryEntry.COLUMN_ITEM_QUANTITY, quantityString);
             values.put(InventoryContract.InventoryEntry.COLUMN_ITEM_PRICE, priceString);
-            values.put(InventoryContract.InventoryEntry.COLUMN_ITEM_PICTURE, mPicturePath);
+            values.put(InventoryContract.InventoryEntry.COLUMN_ITEM_PICTURE, imageString);
+
 
             String name = values.getAsString(InventoryContract.InventoryEntry.COLUMN_ITEM_NAME);
             if (name == null) {
@@ -112,6 +113,7 @@ public class EditorActivity extends AppCompatActivity implements
                 Toast.makeText(this, "Need Quantity entry not created", Toast.LENGTH_LONG).show();
                 return;
             }
+            values.put(InventoryContract.InventoryEntry.COLUMN_ITEM_QUANTITY, quantityString);
 
             int price = 0;
             if (!TextUtils.isEmpty(priceString)) {
@@ -120,6 +122,11 @@ public class EditorActivity extends AppCompatActivity implements
                 Toast.makeText(this, "Need Price entry not created", Toast.LENGTH_LONG).show();
                 return;
             }
+            if (imageString == null) {
+                mItemPicture.setImageResource(R.drawable.inventory);
+                imageString = mItemPicture.toString();
+            }
+            values.put(InventoryContract.InventoryEntry.COLUMN_ITEM_PICTURE, imageString);
 
             if (mCurrentItemUri == null) {
 
@@ -150,9 +157,10 @@ public class EditorActivity extends AppCompatActivity implements
                             Toast.LENGTH_SHORT).show();
                 }
             }
+            finish();
         }
 
-    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -212,11 +220,12 @@ public class EditorActivity extends AppCompatActivity implements
                 startActivity(Intent.createChooser(emailIntent, "Send email..."));
                 return true;
             case R.id.action_picture:
-                Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-                    startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
-                    return true;
-                }
+                    Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT,
+                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI.getPath());
+                    startActivityForResult(takePictureIntent, 1);
+                return true;
+
                 // Respond to a click on the "Up" arrow button in the app bar
             case android.R.id.home:
 
@@ -297,8 +306,6 @@ public class EditorActivity extends AppCompatActivity implements
 
     @Override
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
-        // Since the editor shows all pet attributes, define a projection that contains
-        // all columns from the pet table
         String[] projection = {
                 InventoryContract.InventoryEntry._ID,
                 InventoryContract.InventoryEntry.COLUMN_ITEM_NAME,
@@ -336,17 +343,16 @@ public class EditorActivity extends AppCompatActivity implements
             String name = cursor.getString(nameColumnIndex);
             int quantity = cursor.getInt(quantityColumnIndex);
             int price = cursor.getInt(priceColumnIndex);
-            int picture = cursor.getInt(pictureColumnIndex);
+            String image = cursor.getString(pictureColumnIndex);
+
+            Uri imageUri = Uri.parse(image);
 
             // Update the views on the screen with the values from the database
             mNameEditText.setText(name);
             mQuantityEditText.setText(Integer.toString(quantity));
             mPriceEditText.setText(Integer.toString(price));
+            mItemPicture.setImageURI(imageUri);
 
-            mPicturePath = cursor.getString(pictureColumnIndex);
-            if (!TextUtils.isEmpty(mPicturePath)) {
-                mItemPicture.setImageURI(Uri.parse(new File(mPicturePath).toString()));
-            }
 
         }
     }

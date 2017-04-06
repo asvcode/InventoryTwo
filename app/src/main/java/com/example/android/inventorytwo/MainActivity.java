@@ -109,7 +109,7 @@ public class MainActivity extends AppCompatActivity implements
                 InventoryEntry._ID,
                 InventoryEntry.COLUMN_ITEM_NAME,
                 InventoryEntry.COLUMN_ITEM_QUANTITY,
-                //InventoryEntry.COLUMN_ITEM_PICTURE,
+                InventoryEntry.COLUMN_ITEM_PICTURE,
                  InventoryEntry.COLUMN_ITEM_PRICE};
 
         // This loader will execute the ContentProvider's query method on a background thread
